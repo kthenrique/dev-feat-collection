@@ -1,7 +1,7 @@
 {
     "name": "Neovim as default terminal IDE",
     "id": "neovim",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Set up Neovim for development",
     "options": {
         "version":{
@@ -38,7 +38,7 @@
     "mounts": [
         {
             "source": "${localEnv:HOME}/.config/nvim",
-            "target": "/home/developer/.config/nvim_host",
+            "target": "${containerEnv:HOME}/.config/nvim_host",
             "type": "bind",
             "consistency": "cached"
         }
