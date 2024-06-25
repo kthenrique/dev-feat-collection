@@ -1,0 +1,46 @@
+{
+    "name": "Neovim as default terminal IDE",
+    "id": "neovim",
+    "version": "1.0.0",
+    "description": "Set up Neovim for development",
+    "options": {
+        "version":{
+            "type": "string",
+            "proposals": [
+                "stable",
+                "v0.10.0",
+                "v0.9.5"
+            ],
+            "default": "stable",
+            "description": "Choose which Neovim version to use"
+        },
+        "build_type":{
+            "type": "string",
+            "enum": [
+                "source",
+                "appimage"
+            ],
+            "default": "appimage",
+            "description": "Choose which build type to use"
+        },
+        "nvim_config":{
+            "type": "string",
+            "proposals": [
+                "base",
+                "host",
+                "https://github.com/kthenrique/nvim"
+            ],
+            "default": "host",
+            "description": "Which config to use. This may be set to host (for bind-mounting the host config), base (for a minimum configuration project specific) or a git repository"
+        }
+    },
+    "postCreateCommand": "/tmp/dev-container/feat/nvim/post_create_command.sh",
+    "mounts": [
+        {
+            "source": "${localEnv:HOME}/.config/nvim",
+            "target": "/home/developer/.config/nvim_host",
+            "type": "bind",
+            "consistency": "cached"
+        }
+    ]
+}
