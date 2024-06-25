@@ -7,16 +7,16 @@ You can use the feature in the `.devcontainer/devcontainer.json` of your project
 ```json
 {
   "features": {
-    "./feat/nvim": {
+    "https://github.com/kthenrique/dev_feat_collection/neovim:latest": {
     }
   }
 }
 ```
 
 ## Options
-| Options Id | Description | Type | Default Value |
-|-----|-----|-----|-----|
-| version | Choose which Neovim version to use | string | stable |
-| build_type | Choose which build type to use | string | appimage |
-| link_host_config | Whether to link the host config folder [$HOME/.config/nvim] to the container | boolean | false |
+| Options Id | Description | Type | Default Value | Other Possible Values |
+|-----|-----|-----|-----|-----|
+| version | Choose which Neovim version to use | string | stable | stable, v0.10.0, v0.9.5, etc |
+| build_type | Choose which build type to use | string | appimage | source |
+| nvim_config | Which config to use. This may be set to host (for bind-mounting the host config), base (for a minimum configuration project specific) or a git repository | string | host | base, \<url-to-a-git-repo\> |
 
