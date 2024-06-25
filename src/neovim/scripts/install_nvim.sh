@@ -3,7 +3,7 @@
 # Its macros are defined elsewhere.
 LOCAL_BIN="/usr/local/bin"
 NVIM_CONF_FOLDER="$CONTAINER_USER_HOME/.config/nvim"
-NVIM_CONF_HOST="$CONTAINER_USER_HOME/.config/nvim_host"
+NVIM_CONF_HOST="/media/nvim_host"
 NVIM_CONF_REPO="$CONTAINER_USER_HOME/.config/nvim_repo"
 NVIM_CONF_BASE="$WORKSPACE_FOLDER/.config/nvim_base"
 
@@ -197,13 +197,13 @@ rm -rf "${NVIM_CONF_FOLDER}"
 
 case "${NVIM_CONFIG}" in
     host)
-        setup_host_config || exit 1
+        setup_config_host || exit 1
         ;;
     base)
-        setup_base_config || exit 1
+        setup_config_base || exit 1
         ;;
     *)
-        setup_repo_config || exit 1
+        setup_config_repo || exit 1
         ;;
 esac
 
