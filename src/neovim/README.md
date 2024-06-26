@@ -7,7 +7,7 @@ You can use the feature in the `.devcontainer/devcontainer.json` of your project
 ```json
 {
   "features": {
-    "https://github.com/kthenrique/dev_feat_collection/neovim:latest": {
+    "ghcr.io/kthenrique/dev-feat-collection/neovim:latest": {
     }
   }
 }
