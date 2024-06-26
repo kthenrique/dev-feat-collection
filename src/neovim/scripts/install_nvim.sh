@@ -6,6 +6,7 @@ NVIM_CONF_FOLDER="$CONTAINER_USER_HOME/.config/nvim"
 NVIM_CONF_HOST="/media/nvim_host"
 NVIM_CONF_REPO="$CONTAINER_USER_HOME/.config/nvim_repo"
 NVIM_CONF_BASE="$WORKSPACE_FOLDER/.config/nvim_base"
+OPT_SW_NEOVIM="/opt/neovim"
 
 function notify {
     RED='\033[0;31m[ERROR] '
@@ -98,7 +99,6 @@ function build_neovim {
 
 function build_from_source {
     notify "INFO" "Building Neovim from source..."
-    OPT_SW_NEOVIM="/opt/neovim"
     sudo rm -rf ${OPT_SW_NEOVIM}
     sudo mkdir -p ${OPT_SW_NEOVIM} && sudo chown "${CONTAINER_USER}":"${CONTAINER_USER}" ${OPT_SW_NEOVIM}
 
@@ -149,6 +149,30 @@ EOF
     return $?
 }
 
+function use_prebuilt_release {
+    notify "INFO" "Fetching nvim-linux64:${VERSION} . . ."
+
+    sudo rm -rf ${OPT_SW_NEOVIM}
+    ( (wget "https://github.com/neovim/neovim/releases/download/${VERSION}/nvim-linux64.tar.gz" && \
+    sudo tar -C /opt -xzf nvim-linux64.tar.gz && sudo mv /opt/nvim-linux64 ${OPT_SW_NEOVIM} && sudo ln -s ${OPT_SW_NEOVIM}/bin/nvim ${LOCAL_BIN}/nvim) &> /dev/null || \
+    (notify "ERROR" "Failed to install prebuilt nvim" && rm -rf nvim.appimage && return 1 ) )
+    # shellcheck disable=SC2181 # simpler than if statements
+    [[ $? != 0 ]] && return 1
+
+    ( (sudo chmod +x ${OPT_SW_NEOVIM}/bin/nvim && sudo chown "${CONTAINER_USER}":"${CONTAINER_USER}" ${OPT_SW_NEOVIM}/bin/nvim) || \
+    (notify "ERROR" "Failed to set up prebuilt nvim-linux64" && rm -rf ${OPT_SW_NEOVIM}  && return 1) )
+
+    return $?
+}
+
+function use_apt_ppa {
+    notify "INFO" "Using neovim-ppa . . ."
+
+    install_dependency software-properties-common || return 1
+    sudo add-apt-repository ppa:neovim-ppa/stable --yes &> /dev/null || return 1
+    install_dependency neovim || return 1
+}
+
 function install_common_config_dependencies {
     notify "INFO" "Installing common dependencies..."
     (install_dependency npm luarocks ripgrep && \
@@ -183,12 +207,22 @@ function setup_config_repo {
 }
 
 # Handle BUILD_TYPE
-if [[ "${BUILD_TYPE}" == "source" ]]; then
-    build_from_source || exit 1
-
-else
-    use_appimage_release || exit 1
-fi
+case "${BUILD_TYPE}" in
+    source)
+        build_from_source || exit 1
+        ;;
+    appimage)
+        use_appimage_release || exit 1
+        ;;
+    prebuilt)
+        use_prebuilt_release || exit 1
+        ;;
+    apt)
+        use_apt_ppa || exit 1
+        ;;
+    *)
+        notify "ERROR" "Build type not recognized" && exit 1
+esac
 
 set_default_editor || exit 1
 
