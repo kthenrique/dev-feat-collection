@@ -11,6 +11,7 @@ function create_post_create_command {
     touch $POST_CREATE_SH && \
     echo "#!/bin/bash"                                 >> ${POST_CREATE_SH} && \
     echo "set -euo pipefail"                           >> ${POST_CREATE_SH} && \
+    echo "WORKSPACE_FOLDER=${SCRIPT_DIR}"              >> ${POST_CREATE_SH} && \
     echo "CONTAINER_USER=${_CONTAINER_USER}"           >> ${POST_CREATE_SH} && \
     echo "CONTAINER_USER_HOME=${_CONTAINER_USER_HOME}" >> ${POST_CREATE_SH} && \
     echo "VERSION=${VERSION}"                          >> ${POST_CREATE_SH} && \
