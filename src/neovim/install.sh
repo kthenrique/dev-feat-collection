@@ -39,7 +39,12 @@ case "${BUILD_TYPE}" in
         su "${_CONTAINER_USER}" -c "source ./lifecycle/functions.sh; cd /opt/neovim; fetch_nvim_appimage ${APPIMAGE_WRAPPER_SCRIPT}" || exit 1
         ;;
     prebuilt)
-        use_prebuilt_release || exit 1
+        notify "TASK" "Use nvim-linux64:${VERSION}"
+        install_prebuilt_dependencies
+        PREBUILT_BIN="/opt/neovim/nvim-linux64/bin/nvim"
+        # placeholder for post scripts
+        from_link_to ${PREBUILT_BIN} "/usr/local/bin/nvim"
+        su "${_CONTAINER_USER}" -c "source ./lifecycle/functions.sh; cd /opt/neovim; fetch_nvim_prebuilt ${PREBUILT_BIN}" || exit 1
         ;;
     apt)
         use_apt_ppa || exit 1

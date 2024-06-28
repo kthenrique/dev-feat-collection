@@ -19,7 +19,7 @@
             "enum": [
                 "source",
                 "appimage",
-                "pre-built",
+                "prebuilt",
                 "apt"
             ],
             "default": "appimage",

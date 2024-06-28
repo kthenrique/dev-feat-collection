@@ -84,6 +84,14 @@ function install_appimage_dependencies {
     return 0
 }
 
+function install_prebuilt_dependencies {
+    notify "INFO" "Installing neovim dependencies..."
+    ! am_i_root && notify "ERROR" "<PC>: Not running as root!" && return 1
+
+    install_dependency wget || return 1
+    return 0
+}
+
 function build_neovim {
     notify "INFO" "Cloning neovim ${VERSION} . . ."
     am_i_root && notify "ERROR" "<PC>: Running as root!" && return 1
@@ -151,17 +159,18 @@ EOF
     return $?
 }
 
-function use_prebuilt_release {
+function fetch_nvim_prebuilt {
     notify "INFO" "Fetching nvim-linux64:${VERSION} . . ."
+    PREBUILT_BIN=$1
 
     ( (wget "https://github.com/neovim/neovim/releases/download/${VERSION}/nvim-linux64.tar.gz" && \
-    sudo tar -C /opt -xzf nvim-linux64.tar.gz && sudo mv /opt/nvim-linux64 ${OPT_SW_NEOVIM} && sudo ln -s ${OPT_SW_NEOVIM}/bin/nvim ${LOCAL_BIN}/nvim) &> /dev/null || \
-    (notify "ERROR" "Failed to install prebuilt nvim" && rm -rf nvim.appimage && return 1 ) )
+     tar -C /opt/neovim -xzf nvim-linux64.tar.gz) > /dev/null || \
+    (notify "ERROR" "Failed to install prebuilt nvim" && rm -rf nvim-linux64 && return 1 ) )
     # shellcheck disable=SC2181 # simpler than if statements
     [[ $? != 0 ]] && return 1
 
-    ( chmod +x "${OPT_SW_NEOVIM}/bin/nvim" || \
-    (notify "ERROR" "Failed to set up prebuilt nvim-linux64" && rm -rf ${OPT_SW_NEOVIM}  && return 1) )
+    ( chmod +x "${PREBUILT_BIN}" || \
+    (notify "ERROR" "Failed to set up prebuilt nvim-linux64" && rm -rf nvim-linux64  && return 1) )
 
     return $?
 }
