@@ -1,31 +1,70 @@
 #!/bin/bash
 
+set -euo pipefail
+source ./lifecycle/functions.sh
+
 SCRIPT_PATH=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname -- "${SCRIPT_PATH}")
-TMP_FEAT_DIR="/tmp/dev-container/feat/nvim/"
 
-function create_post_create_command {
-    notify "INFO" "Creating postCreateCommand . . ."
-    POST_CREATE_SH=${TMP_FEAT_DIR}/post_create_command.sh
+if [[ "${_CONTAINER_USER}" == "root" ]]; then
+    notify "ERROR" "Define containerUser in devcontainer.json"
+    notify "WARNING" "Possibly one of these users:"
+    POSSIBLE_USERS=$(ls -1 /home/)
+    notify "INFO" "${POSSIBLE_USERS}"
+    exit 1
+fi
 
-    touch $POST_CREATE_SH && \
-    echo "#!/bin/bash"                                 >> ${POST_CREATE_SH} && \
-    echo "set -euo pipefail"                           >> ${POST_CREATE_SH} && \
-    echo "WORKSPACE_FOLDER=${SCRIPT_DIR}"              >> ${POST_CREATE_SH} && \
-    echo "CONTAINER_USER=${_CONTAINER_USER}"           >> ${POST_CREATE_SH} && \
-    echo "CONTAINER_USER_HOME=${_CONTAINER_USER_HOME}" >> ${POST_CREATE_SH} && \
-    echo "VERSION=${VERSION}"                          >> ${POST_CREATE_SH} && \
-    echo "BUILD_TYPE=${BUILD_TYPE}"                    >> ${POST_CREATE_SH} && \
-    echo "NVIM_CONFIG=${NVIM_CONFIG}"                  >> ${POST_CREATE_SH} && \
-    cat "${SCRIPT_DIR}/scripts/install_nvim.sh"        >> ${POST_CREATE_SH}
+echo "CONTAINER USER = ${_CONTAINER_USER}"
+sleep 5;
 
-    chown "${_CONTAINER_USER}":"${_CONTAINER_USER}" ${POST_CREATE_SH}
-    chmod +x ${POST_CREATE_SH}
-}
+reset_dir_as "/opt/neovim" "${_CONTAINER_USER}" || exit 1
 
-mkdir -p ${TMP_FEAT_DIR}
-chown "${_CONTAINER_USER}":"${_CONTAINER_USER}" ${TMP_FEAT_DIR}
+# Handle BUILD_TYPE
+case "${BUILD_TYPE}" in
+    source)
+        notify "TASK" "Build Neovim from source"
+        install_build_dependencies
+        # placeholder for post scripts
+        from_link_to "/opt/neovim/neovim/build/bin/nvim" "/usr/local/bin/nvim"
 
-# Need to defer execution because of possible need for credentials depending on the OCI registry and
-# its configs, which may be setup later. Otherwise we would need to define them in multiple places
-create_post_create_command
+        notify "INFO" "Proceeding as ${_CONTAINER_USER}..."
+        su "${_CONTAINER_USER}" -c "source ./lifecycle/functions.sh; cd /opt/neovim; build_neovim" || exit 1
+        ;;
+    appimage)
+        notify "TASK" "Use nvim.appimage:${VERSION}"
+        install_appimage_dependencies
+        APPIMAGE_WRAPPER_SCRIPT="/opt/neovim/nvim"
+        # placeholder for post scripts
+        from_link_to ${APPIMAGE_WRAPPER_SCRIPT} "/usr/local/bin/nvim"
+        su "${_CONTAINER_USER}" -c "source ./lifecycle/functions.sh; cd /opt/neovim; fetch_nvim_appimage ${APPIMAGE_WRAPPER_SCRIPT}" || exit 1
+        ;;
+    prebuilt)
+        use_prebuilt_release || exit 1
+        ;;
+    apt)
+        use_apt_ppa || exit 1
+        ;;
+    *)
+        notify "ERROR" "Build type not recognized" && exit 1
+esac
+
+# Handle NVIM_CONFIG
+NVIM_CONF_FOLDER="$_CONTAINER_USER_HOME/.config/nvim"
+su "${_CONTAINER_USER}" -c "rm -rf ${NVIM_CONF_FOLDER}"
+
+case "${NVIM_CONFIG}" in
+    host)
+        notify "TASK" "Set up configuration to mirror host's"
+        install_common_config_packages
+        NVIM_CONF_HOST="/media/nvim_host"
+        su "${_CONTAINER_USER}" -c "source ./lifecycle/functions.sh; setup_config_host ${NVIM_CONF_HOST} ${NVIM_CONF_FOLDER}" || exit 1
+        ;;
+    base)
+        notify "TASK" "Set up configuration to mirror feature's config folder"
+        notify "ERROR" "CONFIG BASED ON FEATURE'S FOLDER IS NOT IMPLEMENTED..." && exit 1
+        ;;
+    *)
+        setup_config_repo || exit 1
+        ;;
+esac
+
