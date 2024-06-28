@@ -46,7 +46,8 @@ case "${BUILD_TYPE}" in
         from_link_to ${PREBUILT_BIN} "/usr/local/bin/nvim"
         su "${_CONTAINER_USER}" -c "source ./lifecycle/functions.sh; cd /opt/neovim; fetch_nvim_prebuilt ${PREBUILT_BIN}" || exit 1
         ;;
-    apt)
+    ppa)
+        notify "TASK" "Use neovim from apt-ppa"
         use_apt_ppa || exit 1
         ;;
     *)

@@ -20,7 +20,7 @@
                 "source",
                 "appimage",
                 "prebuilt",
-                "apt"
+                "ppa"
             ],
             "default": "appimage",
             "description": "Choose which build type to use"
